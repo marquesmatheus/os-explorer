@@ -41,7 +41,7 @@ pip install "flask>=2.3,<4.0"
 
 echo ""
 echo "[OK] Dependências instaladas."
-echo "[INFO] Iniciando servidor em http://localhost:5000"
+echo "[INFO] Iniciando servidor em http://localhost:8080"
 echo "       Pressione Ctrl+C para parar."
 echo ""
 

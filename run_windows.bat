@@ -67,7 +67,7 @@ pip install %FLASK_VER%
 
 echo.
 echo [OK] Dependencias instaladas.
-echo [INFO] Iniciando servidor em http://localhost:5000
+echo [INFO] Iniciando servidor em http://localhost:8080
 echo        Pressione Ctrl+C para parar.
 echo.
 
