@@ -2,6 +2,9 @@
 chcp 65001 >nul 2>&1
 title OS Explorer - Threads, Concorrencia e Clocks
 
+:: Always run from the directory where this .bat is located
+cd /d "%~dp0"
+
 echo ============================================
 echo    OS Explorer - Threads, Concorrencia e Clocks
 echo ============================================
@@ -54,7 +57,7 @@ if not exist "venv" (
 )
 
 :: Activate venv
-call venv\Scripts\activate.bat
+call "%~dp0venv\Scripts\activate.bat"
 if %ERRORLEVEL% neq 0 (
     echo [ERRO] Falha ao ativar ambiente virtual.
     pause
@@ -66,8 +69,8 @@ echo [INFO] Atualizando pip...
 python -m pip install --upgrade pip >nul 2>&1
 
 :: Install Flask based on Python version
-::   Python 3.6  -> flask>=2.0,<2.3   (Flask 2.2+ dropped 3.6)
-::   Python 3.7  -> flask>=2.0,<3.0   (Flask 3.0 dropped 3.7)
+::   Python 3.6  -> flask>=2.0,<2.3
+::   Python 3.7  -> flask>=2.0,<3.0
 ::   Python 3.8+ -> flask>=2.3,<4.0
 echo [INFO] Instalando Flask...
 if %PY_MAJOR% gtr 3 (
@@ -92,6 +95,6 @@ echo [INFO] Iniciando servidor em http://localhost:8080
 echo        Pressione Ctrl+C para parar.
 echo.
 
-python app.py
+python "%~dp0app.py"
 
 pause
