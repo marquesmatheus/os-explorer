@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clocks e GHz - OS Explorer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav>
+    <div class="logo">OS Explorer</div>
+    <a href="/">Home</a>
+    <a href="/threads">Threads</a>
+    <a href="/race-conditions">Race Conditions</a>
+    <a href="/clocks">Clocks & GHz</a>
+  </nav>
+
+  <div class="container">
+    <h1>Clocks, GHz e Arquitetura de Processadores</h1>
+    <p class="lead">O clock é o pulso cardíaco do processador. Cada ciclo, ele executa um conjunto de instruções. Quanto mais GHz, mais ciclos por segundo — mas não é tudo.</p>
+
+    <h2>Como o Clock Funciona</h2>
+    <div class="card">
+      <div class="clock-container">
+        <div style="flex:1;min-width:300px;">
+          <svg id="clock-svg" width="300" height="300" viewBox="0 0 300 300" style="max-width:100%;">
+            <circle cx="150" cy="150" r="140" fill="none" stroke="#30363d" stroke-width="2"/>
+            <circle cx="150" cy="150" r="130" fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="2,6"/>
+
+            <!-- Tick marks -->
+            <g id="ticks"></g>
+
+            <!-- Clock hands -->
+            <line id="second-hand" x1="150" y1="150" x2="150" y2="40" stroke="#f85149" stroke-width="2" stroke-linecap="round"/>
+            <line id="minute-hand" x1="150" y1="150" x2="150" y2="60" stroke="#58a6ff" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="150" cy="150" r="6" fill="#58a6ff"/>
+
+            <!-- Labels -->
+            <text x="150" y="30" text-anchor="middle" fill="#8b949e" font-size="12">12</text>
+            <text x="270" y="155" text-anchor="middle" fill="#8b949e" font-size="12">3</text>
+            <text x="150" y="285" text-anchor="middle" fill="#8b949e" font-size="12">6</text>
+            <text x="30" y="155" text-anchor="middle" fill="#8b949e" font-size="12">9</text>
+          </svg>
+        </div>
+        <div style="flex:1;min-width:300px;">
+          <h3> Müslüdo de Clock</h3>
+          <p>O <strong>sinal de clock</strong> é uma onda quadrada que alterna entre 0 e 1. A cada borda de subida (rising edge), o processador executa operações nos registradores.</p>
+
+          <div style="margin:1rem 0;">
+            <svg width="100%" height="100" viewBox="0 0 600 100">
+              <line x1="0" y1="50" x2="600" y2="50" stroke="#30363d" stroke-width="1"/>
+              <!-- Clock wave -->
+              <polyline points="0,80 20,80 20,20 60,20 60,80 80,80 80,20 120,20 120,80 140,80 140,20 180,20 180,80 200,80 200,20 240,20 240,80 260,80 260,20 300,20 300,80 320,80 320,20 360,20 360,80 380,80 380,20 420,20 420,80 440,80 440,20 480,20 480,80 500,80 500,20 540,20 540,80 560,80 560,20 600,20"
+                fill="none" stroke="#58a6ff" stroke-width="2"/>
+              <!-- Rising edges -->
+              <text x="20" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="80" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="140" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="200" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="260" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="320" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="380" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="440" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="500" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+              <text x="560" y="95" text-anchor="middle" fill="#3fb950" font-size="9">&#8593;</text>
+
+              <text x="50" y="15" fill="#8b949e" font-size="10">1 ciclo = período</text>
+              <text x="310" y="15" fill="#58a6ff" font-size="10">Frequência = 1 / período</text>
+            </svg>
+          </div>
+
+          <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;margin-top:1rem;">
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Fórmula fundamental:</p>
+            <p style="font-size:1.1rem;font-weight:700;color:var(--accent);">f = 1 / T</p>
+            <p style="font-size:0.85rem;color:var(--muted);margin-top:0.3rem;">
+              f = frequência (Hz) | T = período (segundos)<br>
+              Exemplo: 1 GHz = 1.000.000.000 Hz → T = 1 ns por ciclo
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Calculadora de Clock</h2>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:0.3rem;">Frequência (GHz)</label>
+          <input type="number" id="freq-input" value="3.5" step="0.1" min="0.1"
+            style="width:100%;padding:0.6rem;background:#1c2128;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:1rem;">
+        </div>
+        <div>
+          <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:0.3rem;">CPI (Cycles Per Instruction)</label>
+          <input type="number" id="cpi-input" value="1.5" step="0.1" min="0.1"
+            style="width:100%;padding:0.6rem;background:#1c2128;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:1rem;">
+        </div>
+      </div>
+      <button class="btn" onclick="calculateClock()" style="margin-top:1rem;">Calcular</button>
+
+      <div id="clock-results" style="margin-top:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.8rem;">
+        <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center;">
+          <div style="color:var(--muted);font-size:0.7rem;">PERÍODO DO CICLO</div>
+          <div id="period" style="font-size:1.4rem;font-weight:700;color:var(--accent);">0.286 ns</div>
+        </div>
+        <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center;">
+          <div style="color:var(--muted);font-size:0.7rem;">INSTRUÇÕES/SEGUNDO</div>
+          <div id="ips" style="font-size:1.4rem;font-weight:700;color:var(--green);">2.33 B</div>
+        </div>
+        <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center;">
+          <div style="color:var(--muted);font-size:0.7rem;">CICLOS POR SEGUNDO</div>
+          <div id="cps" style="font-size:1.4rem;font-weight:700;color:var(--orange);">3.5 B</div>
+        </div>
+        <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center;">
+          <div style="color:var(--muted);font-size:0.7rem;">TEMPO POR INSTRUÇÃO</div>
+          <div id="tpi" style="font-size:1.4rem;font-weight:700;color:var(--purple);">0.429 ns</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Por que GHz Não é Tudo</h2>
+    <div class="card">
+      <p style="margin-bottom:1rem;">Um processador de 3 GHz pode ser mais lento que um de 2.5 GHz. Por quê? <strong>IPC (Instructions Per Cycle)</strong>.</p>
+
+      <div style="background:#1c2128;border:1px solid var(--border);border-radius:6px;padding:1rem;margin:1rem 0;">
+        <p style="font-size:1rem;font-weight:700;color:var(--accent);text-align:center;">
+          Performance = IPC x Clock (GHz)
+        </p>
+      </div>
+
+      <div id="perf-compare" style="margin:1rem 0;"></div>
+
+      <table class="specs-table">
+        <thead>
+          <tr>
+            <th>Processador</th>
+            <th>Base Clock</th>
+            <th>Boost Clock</th>
+            <th>IPC relativo</th>
+            <th>Performance estimada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Intel Core i9-14900K</td>
+            <td>3.2 GHz</td>
+            <td>6.0 GHz</td>
+            <td>1.0x (baseline)</td>
+            <td>6.0x</td>
+          </tr>
+          <tr>
+            <td>AMD Ryzen 9 7950X</td>
+            <td>4.5 GHz</td>
+            <td>5.7 GHz</td>
+            <td>1.15x</td>
+            <td>6.56x</td>
+          </tr>
+          <tr>
+            <td>Apple M3 Max</td>
+            <td>2.75 GHz</td>
+            <td>4.05 GHz</td>
+            <td>1.4x</td>
+            <td>5.67x</td>
+          </tr>
+          <tr>
+            <td>ARM Cortex-A510</td>
+            <td>1.8 GHz</td>
+            <td>2.0 GHz</td>
+            <td>0.6x</td>
+            <td>1.2x</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Um Ciclo do Processador</h2>
+    <div class="card">
+      <p style="margin-bottom:1rem;">A cada ciclo de clock, a CPU passa por estas etapas (pipeline clássico de 5 estágios):</p>
+
+      <div id="pipeline-viz" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin:1rem 0;"></div>
+
+      <div class="card-grid" style="margin-top:1rem;">
+        <div class="card">
+          <h3 style="color:var(--accent);">1. Fetch</h3>
+          <p>Lê a instrução da memória (ou cache) usando o PC (Program Counter). Se o dado não está no cache, penalty de ~100 ciclos.</p>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--green);">2. Decode</h3>
+          <p>Decodifica a instrução em sinais de controle. LEA, ADD, MOV viram sinais para ALU, registradores e memória.</p>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--orange);">3. Execute</h3>
+          <p>ALU processa: soma, multiplicação, comparação. Branches decidem se pula ou não (branch prediction ajuda).</p>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--purple);">4. Memory</h3>
+          <p>Acessa dados da memória (LOAD/STORE). Cache L1: ~1 ciclo, L2: ~4, L3: ~12, RAM: ~100+ ciclos.</p>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--red);">5. Write Back</h3>
+          <p>Escreve o resultado de volta no registrador. Completou um ciclo inteiro de instrução.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Caches e Latência</h2>
+    <div class="card">
+      <p style="margin-bottom:1rem;">O cache é como ter o ingrediente na bancada vs ir no depósito. Quanto mais longe, mais tempo perdido.</p>
+
+      <div id="latency-bars"></div>
+
+      <table class="specs-table" style="margin-top:1rem;">
+        <thead>
+          <tr>
+            <th>Nível</th>
+            <th>Tamanho típico</th>
+            <th>Latência (ciclos)</th>
+            <th>Tempo real</th>
+            <th>Comparação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-green">L1 Cache</span></td>
+            <td>32-64 KB</td>
+            <td>~1 ciclo</td>
+            <td>~0.3 ns</td>
+            <td>Acender uma fósforo</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue">L2 Cache</span></td>
+            <td>256 KB - 1 MB</td>
+            <td>~4-10 ciclos</td>
+            <td>~1-3 ns</td>
+            <td>Acender um fogareiro</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-orange">L3 Cache</span></td>
+            <td>8-64 MB</td>
+            <td>~30-50 ciclos</td>
+            <td>~10-15 ns</td>
+            <td>Andar até o depósito</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-red">RAM (DDR5)</span></td>
+            <td>16-128 GB</td>
+            <td>~100-200 ciclos</td>
+            <td>~30-60 ns</td>
+            <td>Ir ao supermercado</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-purple">NVMe SSD</span></td>
+            <td>500 GB - 4 TB</td>
+            <td>~10,000+ ciclos</td>
+            <td>~10,000 ns</td>
+            <td>Ir ao depósito do centro</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Overclocking: Estresse no Clock</h2>
+    <div class="card">
+      <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;">
+        <div style="flex:1;">
+          <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:0.3rem;">Clock Base (GHz)</label>
+          <input type="range" id="base-clock" min="1" max="5" step="0.1" value="3.5" oninput="updateOverclock()" style="width:100%;">
+          <span id="base-val" style="color:var(--accent);">3.5 GHz</span>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:0.3rem;">Overclock (%)</label>
+          <input type="range" id="oc-pct" min="0" max="50" step="1" value="0" oninput="updateOverclock()" style="width:100%;">
+          <span id="oc-val" style="color:var(--orange);">+0%</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem;">Resultado</div>
+          <div id="final-clock" style="font-size:2rem;font-weight:700;color:var(--green);">3.5 GHz</div>
+          <div id="final-perf" style="font-size:0.85rem;color:var(--muted);">Perf: 1.00x</div>
+        </div>
+        <div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem;">Risco de Estabilidade</div>
+          <div class="progress-bar">
+            <div id="risk-bar" class="progress-fill" style="width:10%;background:var(--green);"></div>
+          </div>
+          <div id="risk-text" style="font-size:0.8rem;color:var(--green);margin-top:0.3rem;">Seguro</div>
+        </div>
+      </div>
+
+      <div id="oc-warning" style="display:none;margin-top:1rem;padding:0.8rem;border-radius:6px;background:rgba(248,81,73,0.1);border:1px solid var(--red);font-size:0.85rem;color:var(--red);"></div>
+    </div>
+
+    <h2>Verificar Seu Sistema</h2>
+    <div class="card">
+<pre><code># Ver clock atual do processador (Linux)
+cat /proc/cpuinfo | grep "cpu MHz"
+
+# Ver frequência atual (macOS)
+sysctl -a | grep hw.cpufrequency
+
+# Ver todos os cores e suas frequências
+lscpu | grep "CPU MHz"
+
+# Monitorar em tempo real
+watch -n 1 "cat /proc/cpuinfo | grep 'cpu MHz'"
+
+# Windows
+wmic cpu get CurrentClockSpeed,MaxClockSpeed,Name
+
+# Ver cache do processador
+lscpu | grep -i cache</code></pre>
+    </div>
+  </div>
+
+  <footer>OS Explorer &copy; 2026 | Feito com Flask</footer>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Clock animation
+    let clockAngle = 0;
+    function animateClock() {
+      clockAngle += 6; // 6 degrees per second = 1 revolution per minute
+      const rad = (clockAngle - 90) * Math.PI / 180;
+      const sx = 150 + 110 * Math.cos(rad);
+      const sy = 150 + 110 * Math.sin(rad);
+      document.getElementById("second-hand").setAttribute("x2", sx);
+      document.getElementById("second-hand").setAttribute("y2", sy);
+
+      const mRad = ((clockAngle / 60) - 90) * Math.PI / 180;
+      const mx = 150 + 90 * Math.cos(mRad);
+      const my = 150 + 90 * Math.sin(mRad);
+      document.getElementById("minute-hand").setAttribute("x2", mx);
+      document.getElementById("minute-hand").setAttribute("y2", my);
+
+      requestAnimationFrame(animateClock);
+    }
+    animateClock();
+
+    // Tick marks
+    const ticksG = document.getElementById("ticks");
+    for (let i = 0; i < 60; i++) {
+      const angle = (i * 6 - 90) * Math.PI / 180;
+      const r1 = i % 5 === 0 ? 115 : 122;
+      const r2 = 128;
+      const x1 = 150 + r1 * Math.cos(angle);
+      const y1 = 150 + r1 * Math.sin(angle);
+      const x2 = 150 + r2 * Math.cos(angle);
+      const y2 = 150 + r2 * Math.sin(angle);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("stroke", i % 5 === 0 ? "#58a6ff" : "#30363d");
+      line.setAttribute("stroke-width", i % 5 === 0 ? 2 : 1);
+      ticksG.appendChild(line);
+    }
+
+    // Pipeline visualization
+    const stages = [
+      { name: "FETCH", color: "var(--accent)" },
+      { name: "DECODE", color: "var(--green)" },
+      { name: "EXECUTE", color: "var(--orange)" },
+      { name: "MEMORY", color: "var(--purple)" },
+      { name: "WRITE BACK", color: "var(--red)" },
+    ];
+    const pipelineEl = document.getElementById("pipeline-viz");
+    for (let cycle = 0; cycle < 5; cycle++) {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:0.3rem;width:100%;";
+      for (let s = 0; s < 5; s++) {
+        const stageIdx = (s - cycle + 5) % 5;
+        const div = document.createElement("div");
+        div.style.cssText = `flex:1;padding:0.5rem;border-radius:4px;font-size:0.7rem;font-weight:600;text-align:center;background:${stages[stageIdx].color}22;color:${stages[stageIdx].color};border:1px solid ${stages[stageIdx].color}44;`;
+        div.textContent = stages[stageIdx].name;
+        row.appendChild(div);
+      }
+      pipelineEl.appendChild(row);
+    }
+
+    // Latency bars
+    const latencies = [
+      { name: "L1 Cache", cycles: 1, color: "var(--green)" },
+      { name: "L2 Cache", cycles: 7, color: "var(--accent)" },
+      { name: "L3 Cache", cycles: 40, color: "var(--orange)" },
+      { name: "RAM", cycles: 150, color: "var(--red)" },
+      { name: "NVMe SSD", cycles: 10000, color: "var(--purple)" },
+    ];
+    const maxCycles = Math.log10(10000);
+    const barsEl = document.getElementById("latency-bars");
+    latencies.forEach(l => {
+      const pct = (Math.log10(Math.max(l.cycles, 1)) / maxCycles) * 100;
+      barsEl.innerHTML += `
+        <div style="display:flex;align-items:center;gap:0.8rem;margin:0.4rem 0;">
+          <div style="width:80px;font-size:0.8rem;color:var(--muted);text-align:right;">${l.name}</div>
+          <div class="progress-bar" style="flex:1;">
+            <div class="progress-fill" style="width:${pct}%;background:${l.color};"></div>
+          </div>
+          <div style="width:60px;font-size:0.8rem;color:${l.color};font-weight:600;">${l.cycles.toLocaleString()}c</div>
+        </div>`;
+    });
+
+    // Calculator
+    function calculateClock() {
+      const ghz = parseFloat(document.getElementById("freq-input").value);
+      const cpi = parseFloat(document.getElementById("cpi-input").value);
+      if (isNaN(ghz) || isNaN(cpi) || ghz <= 0 || cpi <= 0) return;
+
+      const hz = ghz * 1e9;
+      const period = 1 / hz;
+      const ips = hz / cpi;
+      const tpi = cpi / hz;
+
+      document.getElementById("period").textContent = formatTime(period);
+      document.getElementById("ips").textContent = formatNum(ips);
+      document.getElementById("cps").textContent = formatNum(hz);
+      document.getElementById("tpi").textContent = formatTime(tpi);
+    }
+
+    function formatTime(seconds) {
+      if (seconds < 1e-9) return (seconds * 1e12).toFixed(1) + " ps";
+      if (seconds < 1e-6) return (seconds * 1e9).toFixed(3) + " ns";
+      if (seconds < 1e-3) return (seconds * 1e6).toFixed(1) + " us";
+      return (seconds * 1e3).toFixed(1) + " ms";
+    }
+
+    function formatNum(n) {
+      if (n >= 1e12) return (n / 1e12).toFixed(2) + " T";
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + " B";
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + " M";
+      return n.toFixed(0);
+    }
+
+    // Overclock simulator
+    function updateOverclock() {
+      const base = parseFloat(document.getElementById("base-clock").value);
+      const oc = parseInt(document.getElementById("oc-pct").value);
+      const final = base * (1 + oc / 100);
+
+      document.getElementById("base-val").textContent = base.toFixed(1) + " GHz";
+      document.getElementById("oc-val").textContent = "+" + oc + "%";
+      document.getElementById("final-clock").textContent = final.toFixed(2) + " GHz";
+      document.getElementById("final-perf").textContent = "Perf: " + (final / base).toFixed(2) + "x";
+
+      const riskPct = Math.min(oc * 2, 100);
+      const riskBar = document.getElementById("risk-bar");
+      const riskText = document.getElementById("risk-text");
+      const ocWarning = document.getElementById("oc-warning");
+
+      riskBar.style.width = riskPct + "%";
+
+      if (oc <= 10) {
+        riskBar.style.background = "var(--green)";
+        riskText.textContent = "Seguro";
+        riskText.style.color = "var(--green)";
+        ocWarning.style.display = "none";
+      } else if (oc <= 25) {
+        riskBar.style.background = "var(--orange)";
+        riskText.textContent = "Moderado";
+        riskText.style.color = "var(--orange)";
+        ocWarning.style.display = "block";
+        ocWarning.innerHTML = `<strong>Atenção:</strong> Overclock acima de 10% requer refrigeração adequada (water cooling). Aumente o voltage gradualmente (+0.025V por vez).`;
+      } else {
+        riskBar.style.background = "var(--red)";
+        riskText.textContent = "Perigoso";
+        riskText.style.color = "var(--red)";
+        ocWarning.style.display = "block";
+        ocWarning.innerHTML = `<strong>Risco alto!</strong> Acima de 25% de overclock: necessita refrigeração extrema (LN2/dry ice), pode danificar permanentemente o processador, invalida garantia, e requer testers de estabilidade (Prime95, OCCT).`;
+      }
+    }
+
+    calculateClock();
+    updateOverclock();
+  </script>
+</body>
+</html>

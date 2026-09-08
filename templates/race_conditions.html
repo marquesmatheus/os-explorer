@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Race Conditions - OS Explorer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav>
+    <div class="logo">OS Explorer</div>
+    <a href="/">Home</a>
+    <a href="/threads">Threads</a>
+    <a href="/race-conditions">Race Conditions</a>
+    <a href="/clocks">Clocks & GHz</a>
+  </nav>
+
+  <div class="container">
+    <h1>Race Conditions & Seções Críticas</h1>
+    <p class="lead">Race condition é como dois cozinheiros tentando usar a mesma faca ao mesmo tempo — o resultado depende de quem pega primeiro.</p>
+
+    <h2>Simulação Interativa</h2>
+    <div class="card">
+      <p style="margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem;">Duas threads incrementam um contador compartilhado (conta = 0). Execute sem lock (race condition) ou com lock (seguro).</p>
+
+      <div style="display:flex;gap:0.5rem;margin:1rem 0;">
+        <button class="btn" onclick="runRace(false)" style="background:var(--red);">Sem Lock (Race!)</button>
+        <button class="btn" onclick="runRace(true)" style="background:var(--green);">Com Lock (Seguro)</button>
+        <button class="btn btn-outline" onclick="resetRace()">Resetar</button>
+      </div>
+
+      <div class="card" style="background:#1c2128;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center;margin-bottom:1rem;">
+          <div>
+            <div style="color:var(--muted);font-size:0.75rem;">CONTADOR</div>
+            <div id="counter" style="font-size:2rem;font-weight:700;color:var(--accent);">0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:0.75rem;">ESPERADO</div>
+            <div id="expected" style="font-size:2rem;font-weight:700;color:var(--green);">0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:0.75rem;">RESULTADO</div>
+            <div id="result" style="font-size:2rem;font-weight:700;">-</div>
+          </div>
+        </div>
+        <div class="race-log" id="race-log" style="max-height:250px;overflow-y:auto;font-family:monospace;font-size:0.82rem;"></div>
+      </div>
+
+      <div id="explanation" style="margin-top:1rem;padding:1rem;border-radius:6px;display:none;"></div>
+    </div>
+
+    <h2>As 4 Condições para Seção Crítica</h2>
+    <div class="card-grid">
+      <div class="card">
+        <span class="tag tag-red">Mutual Exclusion</span>
+        <h3>Exclusão Mútua</h3>
+        <p><strong>Só um por vez.</strong> Se um cozinheiro está usando a faca, o outro espera. Nenhum dois processos podem estar na seção crítica ao mesmo tempo.</p>
+      </div>
+      <div class="card">
+        <span class="tag tag-green">Progress</span>
+        <h3>Progresso</h3>
+        <p><strong>Quem decide é quem está esperando.</strong> Se nenhum está na seção crítica e alguém quer entrar, essa pessoa decide quem entra. O processo que saiu não pode impedir.</p>
+      </div>
+      <div class="card">
+        <span class="tag tag-orange">Bounded Waiting</span>
+        <h3>Espera Limitada</h3>
+        <p><strong>Ninguém espera para sempre.</strong> Existe um limite de quantas vezes alguém pode ser preterido. Nenhum processo fica em starvacao.</p>
+      </div>
+      <div class="card">
+        <span class="tag tag-purple">No Assumptions</span>
+        <h3>Sem Suposições</h3>
+        <p><strong>Nenhuma suposição sobre velocidade.</strong> O algoritmo funciona independente de quanto rápido cada processador executa. Sem data races.</p>
+      </div>
+    </div>
+
+    <h2>Algoritmo de Peterson</h2>
+    <div class="card">
+      <p style="margin-bottom:1rem;">Resolução de exclusão mútua para <strong>dois processos</strong>. Usa apenas variáveis compartilhadas (sem hardware especial).</p>
+<pre><code>// Variáveis compartilhadas
+int turn;           // Whose turn it is
+bool flag[2];       // Want to enter
+
+// Processo i (j = 1 - i)
+void enter_cs(int i) {
+    int j = 1 - i;
+    flag[i] = true;     // "Quero entrar"
+    turn = j;           // "Pode ir você"
+    while (flag[j] && turn == j)
+        ;               // Espera ativa
+}
+
+void exit_cs(int i) {
+    flag[i] = false;    // "Já saí"
+}</code></pre>
+      <p style="margin-top:1rem;color:var(--muted);font-size:0.85rem;">Em <code>peterson.c</code>, as compilações com <code>-O2</code> podem reordenar as instruções! Use <code>volatile</code> ou barriers para evitar.</p>
+    </div>
+
+    <h2>Resolução via Hardware</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h3>TestAndSet</h3>
+<pre><code>// Instrução atômica (hardware)
+bool test_and_set(bool *lock) {
+    bool old = *lock;
+    *lock = true;
+    return old;  // Retorna valor ANTES
+}
+
+// Uso:
+while (test_and_set(&mutex))
+    ;  // Espera
+// Seção crítica
+mutex = false;</code></pre>
+      </div>
+      <div class="card">
+        <h3>Swap</h3>
+<pre><code>// Instrução atômica (hardware)
+void swap(bool *a, bool *b) {
+    bool temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Uso:
+bool key = true;
+while (key != false)
+    swap(&lock, &key);
+// Seção crítica
+lock = false;</code></pre>
+      </div>
+    </div>
+
+    <h2>Locks no Mundo Real</h2>
+    <div class="card-grid">
+      <div class="card">
+        <span class="tag tag-red">Kernel Linux</span>
+        <h3>Spinlocks e Mutexes</h3>
+        <p>O kernel protege suas estruturas internas com <strong>spinlocks</strong> (curta espera, sem troca de contexto) e <strong>mutexes</strong> (longa espera, dorme).</p>
+      </div>
+      <div class="card">
+        <span class="tag tag-blue">Banco de Dados</span>
+        <h3>Row Locks</h3>
+        <p>A cada transação, o SGBD aplica <strong>locks de linha</strong> para garantir isolamento. O PostgreSQL usa MVCC para evitar bloqueios na leitura.</p>
+      </div>
+      <div class="card">
+        <span class="tag tag-green">Containers</span>
+        <h3>Docker & Kubernetes</h3>
+        <p>Docker usa <strong>locks de arquivo</strong> para não corromper imagens. Kubernetes usa <strong>etcd com locks distribuídos</strong> para liderança de clusters.</p>
+      </div>
+    </div>
+
+    <h2>Explorando com Ferramentas</h2>
+    <div class="card">
+<pre><code># Ver futex (locks do userspace) de um processo
+strace -f -e futex ./meu_programa
+
+# Cada futex é uma seção crítica sendo protegida
+# Saída típica:
+futex(0x7ffd1234, FUTEX_WAIT_PRIVATE, 0, NULL) = 0   # Bloqueado
+futex(0x7ffd1234, FUTEX_WAKE_PRIVATE, 1, NULL)  = 1   # Desbloqueado
+
+# Detectar deadlocks com.strace
+strace -f -e futex -p &lt;PID&gt; 2&gt;&amp;1 | grep FUTEX_WAIT
+
+# Valgrind para detectar data races
+valgrind --tool=helgrind ./meu_programa</code></pre>
+    </div>
+
+    <h2>Resumo Visual</h2>
+    <div class="card" style="text-align:center;padding:2rem;">
+      <svg width="500" height="200" viewBox="0 0 500 200" style="max-width:100%;">
+        <!-- Shared resource -->
+        <rect x="200" y="20" width="100" height="60" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+        <text x="250" y="55" text-anchor="middle" fill="#58a6ff" font-size="14" font-weight="bold">Recurso</text>
+        <text x="250" y="72" text-anchor="middle" fill="#58a6ff" font-size="11">Compartilhado</text>
+
+        <!-- Thread A -->
+        <rect x="30" y="130" width="90" height="50" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+        <text x="75" y="155" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="bold">Thread A</text>
+        <text x="75" y="170" text-anchor="middle" fill="#8b949e" font-size="10">PID 1234</text>
+
+        <!-- Thread B -->
+        <rect x="380" y="130" width="90" height="50" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="2"/>
+        <text x="425" y="155" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="bold">Thread B</text>
+        <text x="425" y="170" text-anchor="middle" fill="#8b949e" font-size="10">PID 1235</text>
+
+        <!-- Lock icon -->
+        <rect x="220" y="100" width="60" height="30" rx="4" fill="#f85149" opacity="0.2"/>
+        <text x="250" y="120" text-anchor="middle" fill="#f85149" font-size="11" font-weight="bold">MUTEX</text>
+
+        <!-- Lines -->
+        <line x1="75" y1="130" x2="220" y2="130" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="425" y1="130" x2="280" y2="130" stroke="#bc8cff" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="250" y1="80" x2="250" y2="100" stroke="#30363d" stroke-width="1.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <footer>OS Explorer &copy; 2026 | Feito com Flask</footer>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    let raceRunning = false;
+
+    function resetRace() {
+      raceRunning = false;
+      document.getElementById("counter").textContent = "0";
+      document.getElementById("expected").textContent = "0";
+      document.getElementById("result").textContent = "-";
+      document.getElementById("result").style.color = "var(--text)";
+      document.getElementById("race-log").innerHTML = "";
+      document.getElementById("explanation").style.display = "none";
+    }
+
+    async function runRace(withLock) {
+      if (raceRunning) return;
+      resetRace();
+      raceRunning = true;
+
+      const logEl = document.getElementById("race-log");
+      const counterEl = document.getElementById("counter");
+      const expectedEl = document.getElementById("expected");
+      const resultEl = document.getElementById("result");
+      const explanationEl = document.getElementById("explanation");
+
+      let counter = 0;
+      const increments = 1000;
+      const totalExpected = increments * 2;
+
+      expectedEl.textContent = totalExpected;
+      counterEl.textContent = "0";
+
+      logEl.innerHTML += `<div style="color:var(--muted);">[SIM] Iniciando ${withLock ? "COM" : "SEM"} lock | ${increments} increments/thread</div>`;
+
+      let locked = false;
+      const logs = [];
+
+      function acquireLock() {
+        return new Promise(resolve => {
+          function tryAcquire() {
+            if (!locked) {
+              locked = true;
+              resolve();
+            } else {
+              setTimeout(tryAcquire, 0);
+            }
+          }
+          tryAcquire();
+        });
+      }
+
+      function releaseLock() { locked = false; }
+
+      const sleep = ms => new Promise(r => setTimeout(r, 0));
+
+      async function worker(name, color) {
+        for (let i = 0; i < increments; i++) {
+          if (withLock) await acquireLock();
+
+          const old = counter;
+          await sleep(0);
+          counter = old + 1;
+          counterEl.textContent = counter;
+
+          if (withLock) releaseLock();
+
+          if (i % 200 === 0) {
+            logs.push(`<span style="color:${color}">[${name}] incremento ${i}: conta = ${counter}</span>`);
+          }
+        }
+        logs.push(`<span style="color:${color}">[${name}] Finalizado</span>`);
+      }
+
+      // Interleave execution to simulate race
+      let a = 0, b = 0;
+      const runA = async () => {
+        for (let i = 0; i < increments; i++) {
+          if (withLock) await acquireLock();
+          const old = counter;
+          await new Promise(r => setTimeout(r, 0));
+          counter = old + 1;
+          counterEl.textContent = counter;
+          if (withLock) releaseLock();
+          if (i % 200 === 0) logs.push(`<span style="color:var(--accent)">[THREAD-A] i=${i} conta=${counter}</span>`);
+        }
+        logs.push(`<span style="color:var(--accent)">[THREAD-A] Concluído</span>`);
+      };
+      const runB = async () => {
+        for (let i = 0; i < increments; i++) {
+          if (withLock) await acquireLock();
+          const old = counter;
+          await new Promise(r => setTimeout(r, 0));
+          counter = old + 1;
+          counterEl.textContent = counter;
+          if (withLock) releaseLock();
+          if (i % 200 === 0) logs.push(`<span style="color:var(--purple)">[THREAD-B] i=${i} conta=${counter}</span>`);
+        }
+        logs.push(`<span style="color:var(--purple)">[THREAD-B] Concluído</span>`);
+      };
+
+      await Promise.all([runA(), runB()]);
+
+      // Display logs in batches
+      for (let i = 0; i < logs.length; i++) {
+        logEl.innerHTML += logs[i] + "\n";
+        logEl.scrollTop = logEl.scrollHeight;
+        if (i % 5 === 0) await new Promise(r => setTimeout(r, 5));
+      }
+
+      const diff = totalExpected - counter;
+      resultEl.textContent = counter;
+
+      if (diff === 0) {
+        resultEl.style.color = "var(--green)";
+        resultEl.textContent = counter + " OK";
+        logEl.innerHTML += `<div class="safe">[OK] Resultado correto: ${counter} = ${totalExpected}</div>`;
+        explanationEl.style.display = "block";
+        explanationEl.style.background = "rgba(63,185,80,0.1)";
+        explanationEl.style.border = "1px solid var(--green)";
+        explanationEl.innerHTML = `<strong style="color:var(--green);">Lock funcionou!</strong> O mutex garantiu que apenas uma thread acessasse o contador por vez. Nenhuma operação foi perdida.`;
+      } else {
+        resultEl.style.color = "var(--red)";
+        resultEl.textContent = counter + " (perdeu " + diff + ")";
+        logEl.innerHTML += `<div class="danger">[RACE] Resultado incorreto: ${counter} ≠ ${totalExpected} (perdeu ${diff} increments)</div>`;
+        explanationEl.style.display = "block";
+        explanationEl.style.background = "rgba(248,81,73,0.1)";
+        explanationEl.style.border = "1px solid var(--red)";
+        explanationEl.innerHTML = `<strong style="color:var(--red);">Race Condition detectada!</strong> Ambas as threads leram o mesmo valor antigo antes de incrementar, causando updates perdidos. Em ${increments} increments, ${diff} foram sobrescritos.`;
+      }
+
+      raceRunning = false;
+    }
+  </script>
+</body>
+</html>

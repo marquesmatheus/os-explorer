@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OS Explorer - Threads, Concorrência e Clocks</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav>
+    <div class="logo">OS Explorer</div>
+    <a href="/">Home</a>
+    <a href="/threads">Threads</a>
+    <a href="/race-conditions">Race Conditions</a>
+    <a href="/clocks">Clocks & GHz</a>
+  </nav>
+
+  <div class="container">
+    <h1>Explorando Sistemas Operacionais</h1>
+    <p class="lead">Uma jornada interativa pelos conceitos fundamentais de threads, concorrência e arquitetura de processadores.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="tag tag-blue">SO</span>
+        <h3>Threads</h3>
+        <p>Um thread é como um funcionário dentro de um departamento (processo): todos compartilham o mesmo escritório (espaço de endereço) mas cada um tem sua própria mesa (pilha e registradores).</p>
+        <br>
+        <a href="/threads" class="btn">Explorar Threads</a>
+      </div>
+
+      <div class="card">
+        <span class="tag tag-red">Concorrência</span>
+        <h3>Race Conditions</h3>
+        <p>Dois cozinheiros tentando usar a mesma faca ao mesmo tempo — o resultado depende de quem pega primeiro. Veja como proteger seções críticas.</p>
+        <br>
+        <a href="/race-conditions" class="btn">Simular Race Condition</a>
+      </div>
+
+      <div class="card">
+        <span class="tag tag-orange">Hardware</span>
+        <h3>Clocks e GHz</h3>
+        <p>O clock é o pulso cardíaco do processador. Cada GHz bilhão de ciclos por segundo. Entenda como isso afeta a performance real.</p>
+        <br>
+        <a href="/clocks" class="btn">Entender Clocks</a>
+      </div>
+    </div>
+
+    <h2>Visão Geral</h2>
+    <div class="card">
+      <table class="specs-table">
+        <thead>
+          <tr>
+            <th>Conceito</th>
+            <th>Threads</th>
+            <th>Processos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Criar</td>
+            <td><code>~10x mais rápido</code></td>
+            <td>Alto overhead</td>
+          </tr>
+          <tr>
+            <td>Espaço de endereço</td>
+            <td>Compartilhado</td>
+            <td>Isolado</td>
+          </tr>
+          <tr>
+            <td>Comunicação</td>
+            <td>Direta (memória compartilhada)</td>
+            <td>IPC (pipes, sockets...)</td>
+          </tr>
+          <tr>
+            <td>Uso moderno</td>
+            <td>Servers, goroutines, Node.js</td>
+            <td>Containers, isolamento</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Stack Técnico deste Site</h2>
+    <div class="card">
+      <p>Construído com <span class="tag tag-green">Python 3</span> <span class="tag tag-blue">Flask</span> <span class="tag tag-purple">HTML/CSS/JS</span></p>
+      <p style="margin-top:0.5rem;color:var(--muted);font-size:0.85rem;">Conteúdo baseado em conceitos de sistemas operacionais: pthreads, seções críticas, algoritmo de Peterson, spinlocks, futex, cgroups e arquitetura de processadores modernos.</p>
+    </div>
+  </div>
+
+  <footer>OS Explorer &copy; 2026 | Feito com Flask</footer>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
