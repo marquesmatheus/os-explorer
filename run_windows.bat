@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul 2>&1
-title OS Explorer - Threads, Concorrência e Clocks
+title OS Explorer - Threads, Concorrencia e Clocks
 
 echo ============================================
-echo    OS Explorer - Threads, Concorrência e Clocks
+echo    OS Explorer - Threads, Concorrencia e Clocks
 echo ============================================
 echo.
 
@@ -42,31 +42,47 @@ if %PY_MAJOR% equ 3 if %PY_MINOR% lss 8 (
 
 echo [OK] Versao compativel: %PYVER%
 
-:: Determine Flask version based on Python version
-if %PY_MAJOR% gtr 3 (
-    set FLASK_VER=flask>=3.0^,<4.0
-) else if %PY_MAJOR% equ 3 if %PY_MINOR% geq 12 (
-    set FLASK_VER=flask>=3.0^,<4.0
-) else if %PY_MAJOR% equ 3 if %PY_MINOR% geq 8 (
-    set FLASK_VER=flask>=2.3^,<4.0
-)
-
-echo [INFO] Instalando dependencias (Flask %FLASK_VER%)...
-echo.
-
 :: Create virtualenv if not exists
 if not exist "venv" (
     echo [INFO] Criando ambiente virtual...
     python -m venv venv
+    if %ERRORLEVEL% neq 0 (
+        echo [ERRO] Falha ao criar ambiente virtual.
+        pause
+        exit /b 1
+    )
 )
 
-:: Activate and install
+:: Activate venv
 call venv\Scripts\activate.bat
-pip install --upgrade pip >nul 2>&1
-pip install %FLASK_VER%
+if %ERRORLEVEL% neq 0 (
+    echo [ERRO] Falha ao ativar ambiente virtual.
+    pause
+    exit /b 1
+)
+
+:: Upgrade pip
+echo [INFO] Atualizando pip...
+python -m pip install --upgrade pip >nul 2>&1
+
+:: Install Flask based on Python version
+echo [INFO] Instalando Flask...
+if %PY_MAJOR% gtr 3 (
+    pip install "flask>=3.0,<4.0"
+) else if %PY_MAJOR% equ 3 if %PY_MINOR% geq 12 (
+    pip install "flask>=3.0,<4.0"
+) else (
+    pip install "flask>=2.3,<4.0"
+)
+
+if %ERRORLEVEL% neq 0 (
+    echo [ERRO] Falha ao instalar Flask.
+    pause
+    exit /b 1
+)
 
 echo.
-echo [OK] Dependencias instaladas.
+echo [OK] Dependencias instaladas com sucesso.
 echo [INFO] Iniciando servidor em http://localhost:8080
 echo        Pressione Ctrl+C para parar.
 echo.
