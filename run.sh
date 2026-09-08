@@ -20,8 +20,8 @@ PY_MINOR=$(echo "$PYVER" | cut -d. -f2)
 
 echo "[INFO] Python encontrado: $PYVER"
 
-if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 8 ]; }; then
-    echo "[ERRO] Python 3.8+ necessário. Versão: $PYVER"
+if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 6 ]; }; then
+    echo "[ERRO] Python 3.6+ necessário. Versão: $PYVER"
     exit 1
 fi
 
@@ -37,7 +37,18 @@ source venv/bin/activate
 
 echo "[INFO] Instalando dependências..."
 pip install --upgrade pip > /dev/null 2>&1
-pip install "flask>=2.3,<4.0"
+
+# Flask version based on Python:
+#   3.6  -> flask>=2.0,<2.3
+#   3.7  -> flask>=2.0,<3.0
+#   3.8+ -> flask>=2.3,<4.0
+if [ "$PY_MAJOR" -gt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 8 ]; }; then
+    pip install "flask>=2.3,<4.0"
+elif [ "$PY_MINOR" -eq 7 ]; then
+    pip install "flask>=2.0,<3.0"
+else
+    pip install "flask>=2.0,<2.3"
+fi
 
 echo ""
 echo "[OK] Dependências instaladas."

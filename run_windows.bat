@@ -26,16 +26,16 @@ for /f "tokens=1,2 delims=." %%a in ("%PYVER%") do (
 
 echo [INFO] Python encontrado: %PYVER%
 
-:: Validate version >= 3.8
+:: Validate version >= 3.6
 if %PY_MAJOR% lss 3 (
-    echo [ERRO] Python 3.8+ e necessario. Versao encontrada: %PYVER%
-    echo        Baixe Python 3.8+: https://www.python.org/downloads/
+    echo [ERRO] Python 3.6+ e necessario. Versao encontrada: %PYVER%
+    echo        Baixe Python 3.6+: https://www.python.org/downloads/
     pause
     exit /b 1
 )
-if %PY_MAJOR% equ 3 if %PY_MINOR% lss 8 (
-    echo [ERRO] Python 3.8+ e necessario. Versao encontrada: %PYVER%
-    echo        Baixe Python 3.8+: https://www.python.org/downloads/
+if %PY_MAJOR% equ 3 if %PY_MINOR% lss 6 (
+    echo [ERRO] Python 3.6+ e necessario. Versao encontrada: %PYVER%
+    echo        Baixe Python 3.6+: https://www.python.org/downloads/
     pause
     exit /b 1
 )
@@ -66,13 +66,18 @@ echo [INFO] Atualizando pip...
 python -m pip install --upgrade pip >nul 2>&1
 
 :: Install Flask based on Python version
+::   Python 3.6  -> flask>=2.0,<2.3   (Flask 2.2+ dropped 3.6)
+::   Python 3.7  -> flask>=2.0,<3.0   (Flask 3.0 dropped 3.7)
+::   Python 3.8+ -> flask>=2.3,<4.0
 echo [INFO] Instalando Flask...
 if %PY_MAJOR% gtr 3 (
-    pip install "flask>=3.0,<4.0"
-) else if %PY_MAJOR% equ 3 if %PY_MINOR% geq 12 (
-    pip install "flask>=3.0,<4.0"
-) else (
     pip install "flask>=2.3,<4.0"
+) else if %PY_MAJOR% equ 3 if %PY_MINOR% geq 8 (
+    pip install "flask>=2.3,<4.0"
+) else if %PY_MAJOR% equ 3 if %PY_MINOR% equ 7 (
+    pip install "flask>=2.0,<3.0"
+) else if %PY_MAJOR% equ 3 if %PY_MINOR% equ 6 (
+    pip install "flask>=2.0,<2.3"
 )
 
 if %ERRORLEVEL% neq 0 (
